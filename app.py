@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import gspread
 from google.oauth2.service_account import Credentials
 
@@ -341,7 +342,7 @@ if enviar:
         )
 
     else:
-        fecha_registro = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        fecha_registro = datetime.now(ZoneInfo("America/Lima")).strftime("%Y-%m-%d %H:%M:%S")
 
         filas = []
 
