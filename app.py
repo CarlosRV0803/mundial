@@ -15,7 +15,7 @@ st.set_page_config(
 
 # En Streamlit Cloud NO uses rutas de Windows.
 # Este archivo se creará en el entorno donde corra la app.
-ARCHIVO_RESPUESTAS = Path(r"C:\Users\consultor_dga16\Desktop\DIDI\1. Análisis de datos\respuestas_8vos.csv")
+ARCHIVO_RESPUESTAS = Path(r"respuestas_8vos.csv")
 
 # =====================================================
 # Partidos
