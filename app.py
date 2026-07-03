@@ -13,8 +13,6 @@ st.set_page_config(
     layout="centered"
 )
 
-# En Streamlit Cloud NO uses rutas de Windows.
-# Este archivo se creará en el entorno donde corra la app.
 ARCHIVO_RESPUESTAS = Path(r"respuestas_8vos.csv")
 
 # =====================================================
