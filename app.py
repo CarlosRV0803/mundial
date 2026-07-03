@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from pathlib import Path
+import gspread
+from google.oauth2.service_account import Credentials
 
 # =====================================================
 # Configuración general
@@ -13,11 +14,26 @@ st.set_page_config(
     layout="centered"
 )
 
-ARCHIVO_RESPUESTAS = Path(r"respuestas_8vos.csv")
+# =====================================================
+# Columnas esperadas en Google Sheets
+# =====================================================
+
+COLUMNAS_RESPUESTAS = [
+    "fecha_registro",
+    "nombre",
+    "correo",
+    "partido_id",
+    "partido",
+    "equipo_a",
+    "equipo_b",
+    "goles_a_90",
+    "goles_b_90",
+    "clasificado",
+    "momento_clasificacion",
+]
 
 # =====================================================
 # Partidos
-# Cambia esta lista por los cruces reales
 # =====================================================
 
 PARTIDOS = [
@@ -32,15 +48,121 @@ PARTIDOS = [
 ]
 
 # =====================================================
-# Funciones
+# Conexión a Google Sheets
+# =====================================================
+
+@st.cache_resource
+def conectar_google_sheets():
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive",
+    ]
+
+    credentials = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=scopes,
+    )
+
+    client = gspread.authorize(credentials)
+
+    spreadsheet = client.open_by_key(st.secrets["GOOGLE_SHEET_ID"])
+    worksheet = spreadsheet.worksheet(st.secrets["GOOGLE_WORKSHEET_NAME"])
+
+    return worksheet
+
+
+def asegurar_encabezados():
+    """
+    Verifica si la hoja tiene encabezados.
+    Si está vacía, agrega los encabezados esperados.
+    """
+
+    worksheet = conectar_google_sheets()
+    valores = worksheet.get_all_values()
+
+    if not valores:
+        worksheet.append_row(COLUMNAS_RESPUESTAS)
+        return
+
+    encabezados_actuales = valores[0]
+
+    if encabezados_actuales != COLUMNAS_RESPUESTAS:
+        st.warning(
+            "Los encabezados de Google Sheets no coinciden exactamente con los esperados. "
+            "Revisa la primera fila de la hoja."
+        )
+
+
+def leer_respuestas():
+    """
+    Lee todas las respuestas desde Google Sheets.
+    """
+
+    worksheet = conectar_google_sheets()
+    asegurar_encabezados()
+
+    registros = worksheet.get_all_records()
+
+    if not registros:
+        return pd.DataFrame(columns=COLUMNAS_RESPUESTAS)
+
+    df = pd.DataFrame(registros)
+
+    return df
+
+
+def guardar_respuestas_google_sheets(df_nuevo):
+    """
+    Agrega nuevas respuestas a Google Sheets.
+    """
+
+    worksheet = conectar_google_sheets()
+    asegurar_encabezados()
+
+    df_nuevo = df_nuevo[COLUMNAS_RESPUESTAS].copy()
+
+    filas = df_nuevo.astype(str).values.tolist()
+
+    worksheet.append_rows(
+        filas,
+        value_input_option="USER_ENTERED"
+    )
+
+
+def correo_ya_registrado(correo):
+    """
+    Valida si el correo ya fue registrado anteriormente.
+    """
+
+    df = leer_respuestas()
+
+    if df.empty:
+        return False
+
+    if "correo" not in df.columns:
+        return False
+
+    correos_registrados = (
+        df["correo"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+        .unique()
+    )
+
+    return correo.strip().lower() in correos_registrados
+
+
+# =====================================================
+# Funciones de validación
 # =====================================================
 
 def obtener_opciones_validas(equipo_a, equipo_b, goles_a, goles_b):
     """
-    Devuelve:
-    - opciones válidas de clasificado
-    - opciones válidas de momento
-    - mensaje explicativo
+    Reglas:
+    - Si equipo_a gana a los 90', clasifica equipo_a y momento = 90 minutos.
+    - Si equipo_b gana a los 90', clasifica equipo_b y momento = 90 minutos.
+    - Si hay empate a los 90', puede clasificar cualquiera, pero solo en suplementario o penales.
     """
 
     if goles_a > goles_b:
@@ -65,37 +187,11 @@ def obtener_opciones_validas(equipo_a, equipo_b, goles_a, goles_b):
         )
 
 
-def guardar_respuestas(df_nuevo, archivo):
-    if archivo.exists():
-        df_anterior = pd.read_csv(archivo)
-        df_final = pd.concat([df_anterior, df_nuevo], ignore_index=True)
-    else:
-        df_final = df_nuevo
-
-    df_final.to_csv(archivo, index=False, encoding="utf-8-sig")
-
-
-def correo_ya_registrado(correo, archivo):
-    if not archivo.exists():
-        return False
-
-    df = pd.read_csv(archivo)
-
-    if "correo" not in df.columns:
-        return False
-
-    correos_registrados = (
-        df["correo"]
-        .astype(str)
-        .str.strip()
-        .str.lower()
-        .unique()
-    )
-
-    return correo.strip().lower() in correos_registrados
-
-
 def validar_email_basico(correo):
+    """
+    Validación básica de correo.
+    """
+
     correo = correo.strip()
 
     if "@" not in correo:
@@ -105,25 +201,6 @@ def validar_email_basico(correo):
         return False
 
     return True
-
-
-def limpiar_estado_partidos():
-    """
-    Limpia los widgets de pronóstico luego de un registro exitoso.
-    """
-    for partido in PARTIDOS:
-        partido_id = partido["id"]
-
-        keys = [
-            f"goles_a_{partido_id}",
-            f"goles_b_{partido_id}",
-            f"clasificado_{partido_id}",
-            f"momento_{partido_id}",
-        ]
-
-        for key in keys:
-            if key in st.session_state:
-                del st.session_state[key]
 
 
 # =====================================================
@@ -195,6 +272,7 @@ for partido in PARTIDOS:
     key_clasificado = f"clasificado_{partido_id}"
     key_momento = f"momento_{partido_id}"
 
+    # Forzar consistencia en session_state
     if key_clasificado not in st.session_state:
         st.session_state[key_clasificado] = opciones_clasificado[0]
 
@@ -256,7 +334,7 @@ if enviar:
     elif not validar_email_basico(correo_limpio):
         st.error("Debes ingresar un correo válido.")
 
-    elif correo_ya_registrado(correo_limpio, ARCHIVO_RESPUESTAS):
+    elif correo_ya_registrado(correo_limpio):
         st.error(
             "Este correo ya registró una respuesta. "
             "Si necesitas modificarla, comunícate con el organizador."
@@ -277,9 +355,10 @@ if enviar:
 
         df_nuevo = pd.DataFrame(filas)
 
-        guardar_respuestas(df_nuevo, ARCHIVO_RESPUESTAS)
+        guardar_respuestas_google_sheets(df_nuevo)
 
         st.success("Tus pronósticos fueron registrados correctamente.")
+        st.info("Las respuestas fueron guardadas en Google Sheets.")
 
         st.write("Resumen de tu registro:")
         st.dataframe(df_nuevo, use_container_width=True)
