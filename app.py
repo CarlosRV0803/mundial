@@ -44,8 +44,8 @@ PARTIDOS = [
     {"id": 4, "equipo_a": "México", "equipo_b": "Inglaterra"},
     {"id": 5, "equipo_a": "Portugal", "equipo_b": "España"},
     {"id": 6, "equipo_a": "Estados Unidos", "equipo_b": "Bélgica"},
-    {"id": 7, "equipo_a": "A", "equipo_b": "B"},
-    {"id": 8, "equipo_a": "Suiza", "equipo_b": "C"},
+    {"id": 7, "equipo_a": "Argentina", "equipo_b": "Egipto"},
+    {"id": 8, "equipo_a": "Suiza", "equipo_b": "Colombia"},
 ]
 
 # =====================================================
