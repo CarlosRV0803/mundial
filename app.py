@@ -38,14 +38,10 @@ COLUMNAS_RESPUESTAS = [
 # =====================================================
 
 PARTIDOS = [
-    {"id": 1, "equipo_a": "Canadá", "equipo_b": "Marruecos"},
-    {"id": 2, "equipo_a": "Paraguay", "equipo_b": "Francia"},
-    {"id": 3, "equipo_a": "Brasil", "equipo_b": "Noruega"},
-    {"id": 4, "equipo_a": "México", "equipo_b": "Inglaterra"},
-    {"id": 5, "equipo_a": "Portugal", "equipo_b": "España"},
-    {"id": 6, "equipo_a": "Estados Unidos", "equipo_b": "Bélgica"},
-    {"id": 7, "equipo_a": "Argentina", "equipo_b": "Egipto"},
-    {"id": 8, "equipo_a": "Suiza", "equipo_b": "Colombia"},
+    {"id": 1, "equipo_a": "Francia", "equipo_b": "Marruecos"},
+    {"id": 2, "equipo_a": "España", "equipo_b": "Bélgica"},
+    {"id": 3, "equipo_a": "Noruega", "equipo_b": "Inglaterra"},
+    {"id": 4, "equipo_a": "Argentina", "equipo_b": "EQUIPO B"},
 ]
 
 # =====================================================
