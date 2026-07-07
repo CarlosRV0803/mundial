@@ -10,7 +10,7 @@ from google.oauth2.service_account import Credentials
 # =====================================================
 
 st.set_page_config(
-    page_title="Polla Mundialista - 8vos",
+    page_title="Polla Mundialista - 4tos",
     page_icon="⚽",
     layout="centered"
 )
