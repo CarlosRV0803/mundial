@@ -204,7 +204,7 @@ def validar_email_basico(correo):
 # Interfaz
 # =====================================================
 
-st.title("⚽ Polla Mundialista - 8vos de final")
+st.title("⚽ Polla Mundialista - 4tos de final")
 
 st.write(
     "Registra tus pronósticos para cada partido: resultado a los 90 minutos, "
