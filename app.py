@@ -707,6 +707,3 @@ if (
                 "No se pudieron guardar los pronósticos. "
                 f"Detalle: {error}"
             )
-
-        st.write("Resumen de tu registro:")
-        st.dataframe(df_nuevo, use_container_width=True)
