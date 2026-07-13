@@ -699,7 +699,6 @@ if (
                 st.success(
                     "✅ Tus pronósticos fueron registrados correctamente en Google Sheets."
                 )
-                st.balloons()
 
 
         except Exception as error:
